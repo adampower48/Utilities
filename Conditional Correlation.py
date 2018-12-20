@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def cond_corr(_df, group_cols):
+def cond_corr(_df, group_cols, cutoff=0.01):
     """
     Computes correlation matrix grouped by the values in grouped_cols.
     Returns a MutliIndex dataframe with index (grouped_col, grouped_val, corr_matrix_index).
@@ -11,7 +11,15 @@ def cond_corr(_df, group_cols):
     corrs = {}
     for col in group_cols:
         corrs[col] = {}
+        
+        _sum = _df.groupby(col).count().sum().mean()
         for val, group in _df.groupby(col):
+            
+            # Ignore insignificant/outlier values
+            if group.count().mean() < _sum * cutoff:
+                continue
+            
+            
             corrs[col][val] = group.corr()
             
         corrs[col] = pd.concat(corrs[col].values(), keys=corrs[col].keys(), axis=0)
